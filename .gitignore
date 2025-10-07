@@ -1,0 +1,10 @@
+**/pki
+**/LOG.*
+**/*.key
+**/*.tkn
+**/*.tgz
+**/*.tar.gz
+**/*.log
+**/*.html
+**/*.yaml
+
