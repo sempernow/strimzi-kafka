@@ -6,7 +6,7 @@ metadata:
   labels:
     strimzi.io/cluster: $KAFKA_CLUSTER
 spec:
-  replicas: 2
+  replicas: 3
   roles:
     - controller
   storage:
@@ -88,11 +88,18 @@ spec:
       ## by declarations of who can Read, Write, Describe, Create, etc. 
       ## on topics, groups, transactional IDs, cluster, etc.
     config:
-      offsets.topic.replication.factor: 3
-      transaction.state.log.replication.factor: 3
-      transaction.state.log.min.isr: 2
-      default.replication.factor: 3
-      min.insync.replicas: 2
+      # EXPLICIT KRaft CONFIG (don't rely on inference)
+      process.roles: "controller,broker"
+      inter.broker.protocol.version: "4.0"
+      
+      # Conservative settings until stable
+      offsets.topic.replication.factor: 2
+      transaction.state.log.replication.factor: 2
+      default.replication.factor: 2
+      min.insync.replicas: 1
+      
+      # Conservative metadata settings
+      metadata.log.max.record.bytes.between.snapshots: 20971520
   entityOperator:
     topicOperator: {}
     userOperator: {}
