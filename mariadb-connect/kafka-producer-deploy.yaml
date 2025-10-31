@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-producer-script
+data:
+  producer.py: |
+    # [Insert the entire producer.py content here]
+    # For brevity in this example, we'll mount it as a file
+  requirements.txt: |
+    kafka-python==2.0.2
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: producer-config
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "my-kafka-cluster-kafka-bootstrap:9092"
+  USER_EVENTS_TOPIC: "user-events"
+  ORDER_EVENTS_TOPIC: "order-events"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-producer
+  labels:
+    app: kafka-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-producer
+  template:
+    metadata:
+      labels:
+        app: kafka-producer
+    spec:
+      containers:
+      - name: producer
+        image: python:3.9-slim
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            pip install -r /app/requirements.txt &&
+            python /app/producer.py
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: producer-config
+              key: KAFKA_BOOTSTRAP_SERVERS
+        - name: USER_EVENTS_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: producer-config
+              key: USER_EVENTS_TOPIC
+        - name: ORDER_EVENTS_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: producer-config
+              key: ORDER_EVENTS_TOPIC
+        volumeMounts:
+        - name: producer-scripts
+          mountPath: /app
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: producer-scripts
+        configMap:
+          name: kafka-producer-script
+---
+# Optional: Service for health checks or management
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-producer-service
+spec:
+  selector:
+    app: kafka-producer
+  ports:
+  - port: 8000
+    targetPort: 8000
+

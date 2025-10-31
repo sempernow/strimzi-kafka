@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kafka-producer-cron
+spec:
+  schedule: "*/5 * * * *"  # Run every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: producer
+            image: python:3.9-slim
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                pip install kafka-python==2.0.2 &&
+                python /app/producer.py
+            env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "my-kafka-cluster-kafka-bootstrap:9092"
+            volumeMounts:
+            - name: producer-scripts
+              mountPath: /app
+          volumes:
+          - name: producer-scripts
+            configMap:
+              name: kafka-producer-script
+          restartPolicy: OnFailure

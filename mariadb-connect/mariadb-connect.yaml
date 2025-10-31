@@ -1,0 +1,28 @@
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: mariadb-connect-cluster
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  replicas: 2
+  bootstrapServers: your-kafka-cluster-kafka-bootstrap:9092
+  config:
+    group.id: connect-cluster
+    offset.storage.topic: connect-cluster-offsets
+    config.storage.topic: connect-cluster-configs
+    status.storage.topic: connect-cluster-status
+    key.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: false
+    value.converter.schemas.enable: false
+  build:
+    output: 
+      type: docker
+      image: your-registry/mariadb-connect-cluster:latest
+    plugins:
+      - name: kafka-connect-jdbc
+        artifacts:
+          - type: tgz
+            url: https://repo1.maven.org/maven2/io/confluent/kafka-connect-jdbc/10.7.4/kafka-connect-jdbc-10.7.4.tar.gz

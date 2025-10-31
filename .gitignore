@@ -2,9 +2,9 @@
 **/LOG.*
 **/*.key
 **/*.tkn
+**/*.txz
 **/*.tgz
 **/*.tar.gz
 **/*.log
 **/*.html
-**/*.yaml
-
+/*.yaml

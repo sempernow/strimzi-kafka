@@ -1,0 +1,59 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mariadb-credentials
+type: Opaque
+stringData:
+  username: kafka_connect
+  password: db_user_password
+  connection.url: jdbc:mysql://mariadb-service:3306/kafka_data
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: mariadb-sink-connector
+  labels:
+    strimzi.io/cluster: mariadb-connect-cluster
+spec:
+  class: io.confluent.connect.jdbc.JdbcSinkConnector
+  tasksMax: 2
+  config:
+    # Connection configuration
+    connection.url: "jdbc:mysql://mariadb-service:3306/kafka_data"
+    connection.user: "${file:/opt/kafka/external-configuration/mariadb-credentials/username}"
+    connection.password: "${file:/opt/kafka/external-configuration/mariadb-credentials/password}"
+    
+    # Topic and table mapping
+    topics: "user-events,order-events"
+    table.name.format: "kafka_${topic}"
+    
+    # Behavior configuration
+    insert.mode: "upsert"
+    pk.mode: "record_key"
+    pk.fields: "id"
+    
+    # Auto-create tables if missing
+    auto.create: "true"
+    auto.evolve: "true"
+    
+    auto.create: "true"  # Attempts to create tables if missing
+    auto.evolve: "true"  # Attempts to add new columns if needed
+
+    # Error handling
+    errors.tolerance: "all"
+    errors.deadletterqueue.topic.name: "mariadb-sink-errors"
+    errors.log.enable: "true"
+    
+    # Maximum number of records per batch
+    batch.size: 1000
+    
+    # Data mapping
+    fields.whitelist: "id,name,email,created_at,user_id,amount,currency,status,items"
+
+    # For JSON payloads
+    key.converter: "org.apache.kafka.connect.json.JsonConverter"
+    value.converter: "org.apache.kafka.connect.json.JsonConverter"
+    key.converter.schemas.enable: "false"
+    value.converter.schemas.enable: "false"
